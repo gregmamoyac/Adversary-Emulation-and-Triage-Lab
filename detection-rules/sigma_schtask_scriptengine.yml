@@ -1,0 +1,116 @@
+title: Scheduled Task Created by Scripting Engine (T1053.005)
+id: 9c5a3d4e-6f7b-4c0a-be3d-4f5a6b7c8d9e
+status: stable
+description: >
+    Detects creation of a scheduled task where the parent process is a scripting
+    engine (wscript.exe, cscript.exe, mshta.exe). Legitimate software rarely creates
+    scheduled tasks from scripting engines — this pattern is strongly associated with
+    attacker persistence establishment via malicious scripts or macro-enabled documents.
+references:
+    - https://attack.mitre.org/techniques/T1053/005/
+    - https://research.splunk.com/endpoint/suspicious_scheduled_task/
+author: Blue Team Detection Lab
+date: 2024-01-01
+tags:
+    - attack.t1053.005
+    - attack.persistence
+    - attack.privilege_escalation
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_child:
+        Image|endswith: '\schtasks.exe'
+        CommandLine|contains: '/create'
+    selection_parent_scripting:
+        ParentImage|endswith:
+            - '\wscript.exe'
+            - '\cscript.exe'
+            - '\mshta.exe'
+            - '\wmic.exe'
+    condition: selection_child and selection_parent_scripting
+falsepositives:
+    - Very rare — investigate all hits
+    - Some legacy enterprise software may use VBS installers that create tasks
+level: high
+fields:
+    - CommandLine
+    - ParentImage
+    - ParentCommandLine
+    - User
+
+---
+title: Scheduled Task Created with Scripting Engine Action (EID 4698)
+id: ad6b4e5f-7a8c-4d1b-cf4e-5a6b7c8d9e0f
+status: stable
+description: >
+    Detects Windows Security Event 4698 (scheduled task created) where the task
+    XML content references a scripting engine in the Exec action. Complements the
+    process-creation rule by catching cases where the parent process is not visible
+    (e.g., task created via COM/Task Scheduler API directly).
+references:
+    - https://attack.mitre.org/techniques/T1053/005/
+    - https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4698
+author: Blue Team Detection Lab
+date: 2024-01-01
+tags:
+    - attack.t1053.005
+    - attack.persistence
+logsource:
+    product: windows
+    service: security
+detection:
+    selection:
+        EventID: 4698
+    filter_scripting:
+        TaskContent|contains:
+            - 'wscript.exe'
+            - 'cscript.exe'
+            - 'mshta.exe'
+            - 'powershell.exe'
+            - 'regsvr32.exe'
+            - 'rundll32.exe'
+    condition: selection and filter_scripting
+falsepositives:
+    - PowerShell scheduled tasks created by some legitimate software (score against baseline)
+    - Investigate any non-Microsoft-signed task with these actions
+level: high
+fields:
+    - SubjectUserName
+    - TaskName
+    - TaskContent
+
+---
+title: Scheduled Task Name Masquerading as Windows Component
+id: be7c5f6a-8b9d-4e2c-d05f-6b7c8d9e0a1b
+status: experimental
+description: >
+    Detects scheduled tasks created with names that mimic legitimate Windows components
+    but are registered outside of Microsoft task paths. A common attacker tactic is to
+    name malicious tasks "WindowsUpdate", "SystemTelemetry", etc.
+author: Blue Team Detection Lab
+date: 2024-01-01
+tags:
+    - attack.t1053.005
+    - attack.defense_evasion
+logsource:
+    product: windows
+    service: security
+detection:
+    selection:
+        EventID: 4698
+    filter_name:
+        TaskName|contains:
+            - 'WindowsUpdate'
+            - 'SystemTelemetry'
+            - 'WindowsHelper'
+            - 'MicrosoftUpdate'
+            - 'OfficeUpdate'
+    filter_legit_path:
+        TaskName|startswith:
+            - '\Microsoft\'
+    condition: selection and filter_name and not filter_legit_path
+falsepositives:
+    - Third-party software with unfortunately generic names
+    - Validate against known-good software baseline
+level: medium

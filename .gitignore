@@ -1,0 +1,4 @@
+*.json
+triage_report.txt
+TriageOutput/
+Adversary-Emulation-and-Triage-Lab-main/
