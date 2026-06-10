@@ -2,7 +2,7 @@
 
 > A hands-on detection engineering lab mapping adversary techniques to SIEM alerts, endpoint forensics, and IR triage workflows. Built to demonstrate blue team capabilities across the full detection lifecycle.
 
-> POC creation and master triage script compiled and authored by Greg Mamoyac. For production IR engagements, this lab's triage logic maps to KAPE collection targets and Eric Zimmerman's forensic parsers. For comprehensive forensic analysis via consolidated DFIR investigative toolkit, please refer to my own developed application [Gregrep-Overlord-App](https://github.com/gregmamoyac/Gregrep-Overlord-App)
+> POC creation and master triage script compiled and authored by Greg Mamoyac. For production IR engagements, this lab's triage logic maps to KAPE collection targets and Eric Zimmerman's forensic parsers. For comprehensive forensic analysis via consolidated DFIR investigative toolkit, please refer to my own developed application [Gregrep-Overlord--DFIR-App](https://github.com/gregmamoyac/Gregrep-Overlord-DFIR-App)
 
 ---
 
